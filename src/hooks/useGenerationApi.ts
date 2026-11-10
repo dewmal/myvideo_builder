@@ -53,6 +53,8 @@ interface GenerationContext {
   hasManualEdits: boolean;
   errorCorrection?: ErrorCorrectionContext;
   frameImages?: string[];
+  durationInFrames: number;
+  fps: number;
 }
 
 interface UseGenerationApiReturn {
@@ -87,6 +89,8 @@ export function useGenerationApi(): UseGenerationApiReturn {
         hasManualEdits,
         errorCorrection,
         frameImages,
+        durationInFrames,
+        fps,
       } = context;
 
       const {
@@ -124,6 +128,8 @@ export function useGenerationApi(): UseGenerationApiReturn {
             hasManualEdits,
             errorCorrection,
             frameImages,
+            durationInFrames,
+            fps,
           }),
         });
 

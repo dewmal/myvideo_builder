@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useGenerationApi } from "@/hooks/useGenerationApi";
 import { cn } from "@/lib/utils";
+import { estimateDurationInFrames } from "@/helpers/animation-duration";
 import type {
   AssistantMetadata,
   ConversationContextMessage,
@@ -76,6 +77,7 @@ interface ChatSidebarProps {
   Component?: ComponentType | null;
   fps?: number;
   durationInFrames?: number;
+  onDurationChange?: (duration: number) => void;
   currentFrame?: number;
 }
 
@@ -106,11 +108,12 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
       Component,
       fps = 30,
       durationInFrames = 150,
+      onDurationChange,
       currentFrame = 0,
     },
     ref,
   ) {
-    const [model, setModel] = useState<ModelId>(MODELS[1].id);
+    const [model, setModel] = useState<ModelId>(MODELS[0].id);
     const promptRef = useRef<string>("");
 
     const { isLoading, runGeneration } = useGenerationApi();
@@ -127,6 +130,11 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
       const currentPrompt = promptRef.current;
       if (!currentPrompt.trim()) return;
 
+      const generationDurationInFrames = isFollowUp
+        ? durationInFrames
+        : estimateDurationInFrames(currentPrompt, fps);
+      if (!isFollowUp) onDurationChange?.(generationDurationInFrames);
+
       onPromptChange(""); // Clear input immediately
 
       await runGeneration(
@@ -140,6 +148,8 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
           hasManualEdits,
           errorCorrection,
           frameImages: options?.attachedImages,
+          durationInFrames: generationDurationInFrames,
+          fps,
         },
         {
           onCodeGenerated,

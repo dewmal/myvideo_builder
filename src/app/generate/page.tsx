@@ -282,6 +282,7 @@ function GeneratePageContent() {
           Component={Component}
           fps={fps}
           durationInFrames={durationInFrames}
+          onDurationChange={setDurationInFrames}
           currentFrame={currentFrame}
         />
 

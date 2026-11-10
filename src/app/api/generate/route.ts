@@ -281,6 +281,8 @@ interface GenerateRequest {
   previouslyUsedSkills?: string[];
   /** Base64 image data URLs for visual context */
   frameImages?: string[];
+  durationInFrames?: number;
+  fps?: number;
 }
 
 interface GenerateResponse {
@@ -297,7 +299,7 @@ interface GenerateResponse {
 export async function POST(req: Request) {
   const {
     prompt,
-    model = "gpt-5.2",
+    model = "gpt-6.1-sol:low",
     currentCode,
     conversationHistory = [],
     isFollowUp = false,
@@ -305,6 +307,8 @@ export async function POST(req: Request) {
     errorCorrection,
     previouslyUsedSkills = [],
     frameImages,
+    durationInFrames = 240,
+    fps = 30,
   }: GenerateRequest = await req.json();
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -326,6 +330,9 @@ export async function POST(req: Request) {
   const [modelName, reasoningEffort] = model.split(":");
 
   const openai = createOpenAI({ apiKey });
+  const selectedModel = modelName.startsWith("gpt-6")
+    ? openai.responses(modelName)
+    : openai(modelName);
 
   // Validate the prompt first (skip for follow-ups with existing code)
   if (!isFollowUp) {
@@ -386,9 +393,12 @@ export async function POST(req: Request) {
 
   // Load skill-specific content only for NEW skills (previously used skills are already in context)
   const skillContent = getCombinedSkillContent(newSkills as SkillName[]);
+  const durationGuidance = !isFollowUp
+    ? `\n\n## TARGET VIDEO DURATION\nCreate a complete animation that fills approximately ${(durationInFrames / fps).toFixed(1)} seconds at ${fps} FPS. Pace every scene and transition across the full duration. Use useVideoConfig().durationInFrames for timing so the ending lands near the end of the composition.`
+    : "";
   const enhancedSystemPrompt = skillContent
-    ? `${SYSTEM_PROMPT}\n\n## SKILL-SPECIFIC GUIDANCE\n${skillContent}`
-    : SYSTEM_PROMPT;
+    ? `${SYSTEM_PROMPT}\n\n## SKILL-SPECIFIC GUIDANCE\n${skillContent}${durationGuidance}`
+    : `${SYSTEM_PROMPT}${durationGuidance}`;
 
   // FOLLOW-UP MODE: Use non-streaming generateObject for faster edits
   if (isFollowUp && currentCode) {
@@ -510,7 +520,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
       ];
 
       const editResult = await generateObject({
-        model: openai(modelName),
+        model: selectedModel,
         system: FOLLOW_UP_SYSTEM_PROMPT,
         messages: editMessages,
         schema: FollowUpResponseSchema,
@@ -613,7 +623,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
     ];
 
     const result = streamText({
-      model: openai(modelName),
+      model: selectedModel,
       system: enhancedSystemPrompt,
       messages: initialMessages,
       ...(reasoningEffort && {

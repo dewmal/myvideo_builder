@@ -51,7 +51,7 @@ export function LandingPageInput({
   showCodeExamplesLink = false,
 }: LandingPageInputProps) {
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<ModelId>("gpt-5.2:low");
+  const [model, setModel] = useState<ModelId>("gpt-6.1-sol:low");
   const {
     attachedImages,
     isDragging,
