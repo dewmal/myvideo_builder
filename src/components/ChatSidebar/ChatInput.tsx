@@ -21,13 +21,20 @@ interface ChatInputProps {
   model: ModelId;
   onModelChange: (model: ModelId) => void;
   isLoading: boolean;
-  onSubmit: (attachedImages?: string[]) => void;
+  onSubmit: (attachedImages?: string[], voiceover?: VoiceoverRequest) => void;
   // Frame capture props
   Component?: ComponentType | null;
   fps?: number;
   durationInFrames?: number;
   currentFrame?: number;
 }
+
+export interface VoiceoverRequest {
+  prompt: string;
+}
+
+const VOICEOVER_INTENT =
+  /\b(?:voice(?:[\s-]?overs?)?|narrat(?:e|ion|or)|spoken|speech|speaking|dialogue|dialog)\b/i;
 
 export function ChatInput({
   prompt,
@@ -70,7 +77,9 @@ export function ChatInput({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
-    onSubmit(attachedImages.length > 0 ? attachedImages : undefined);
+    const requestsVoiceover = VOICEOVER_INTENT.test(prompt);
+    const voiceover = requestsVoiceover ? { prompt: prompt.trim() } : undefined;
+    onSubmit(attachedImages.length > 0 ? attachedImages : undefined, voiceover);
     clearImages();
   };
 
@@ -168,6 +177,12 @@ export function ChatInput({
             style={{ fieldSizing: "content" } as React.CSSProperties}
             disabled={isLoading}
           />
+
+          {VOICEOVER_INTENT.test(prompt) && (
+            <p className="mt-2 flex items-center gap-1 text-[11px] text-primary">
+              Voiceover request detected — Qwen will generate speech from this prompt.
+            </p>
+          )}
           {/* Hidden file input */}
           <input
             ref={fileInputRef}

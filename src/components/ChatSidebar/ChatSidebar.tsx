@@ -27,7 +27,9 @@ import {
   type ComponentType,
 } from "react";
 import { ChatHistory } from "./ChatHistory";
-import { ChatInput } from "./ChatInput";
+import { ChatInput, type VoiceoverRequest } from "./ChatInput";
+
+type NarrationStatus = "idle" | "waiting" | "generating" | "ready" | "error";
 
 export interface ChatSidebarRef {
   triggerGeneration: (options?: {
@@ -79,6 +81,8 @@ interface ChatSidebarProps {
   durationInFrames?: number;
   onDurationChange?: (duration: number) => void;
   currentFrame?: number;
+  onNarrationAudioChange?: (audio: string | null) => void;
+  onNarrationStatusChange?: (status: NarrationStatus, error?: string | null) => void;
 }
 
 export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
@@ -110,6 +114,8 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
       durationInFrames = 150,
       onDurationChange,
       currentFrame = 0,
+      onNarrationAudioChange,
+      onNarrationStatusChange,
     },
     ref,
   ) {
@@ -126,6 +132,7 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
     const handleGeneration = async (options?: {
       silent?: boolean;
       attachedImages?: string[];
+      voiceover?: VoiceoverRequest;
     }) => {
       const currentPrompt = promptRef.current;
       if (!currentPrompt.trim()) return;
@@ -134,6 +141,14 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
         ? durationInFrames
         : estimateDurationInFrames(currentPrompt, fps);
       if (!isFollowUp) onDurationChange?.(generationDurationInFrames);
+
+      if (options?.voiceover) {
+        onNarrationAudioChange?.(null);
+        onNarrationStatusChange?.("waiting", null);
+      } else {
+        onNarrationAudioChange?.(null);
+        onNarrationStatusChange?.("idle", null);
+      }
 
       onPromptChange(""); // Clear input immediately
 
@@ -156,8 +171,51 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
           onStreamingChange,
           onStreamPhaseChange,
           onError,
-          onMessageSent,
-          onGenerationComplete,
+          onMessageSent: (message, attachedImages) => {
+            onMessageSent?.(message, attachedImages);
+          },
+          onGenerationComplete: (generatedCode, summary, metadata) => {
+            onGenerationComplete?.(generatedCode, summary, metadata);
+            if (options?.voiceover) {
+              onNarrationStatusChange?.("generating", null);
+              void (async () => {
+                try {
+                  const response = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: options.voiceover.prompt }),
+                  });
+                  if (!response.ok) {
+                    const result = await response.json().catch(() => null);
+                    throw new Error(result?.error || `TTS request failed (${response.status})`);
+                  }
+                  const audioBlob = await response.blob();
+                  const audioData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onerror = () => reject(new Error("Could not read generated audio"));
+                    reader.onload = () =>
+                      typeof reader.result === "string"
+                        ? resolve(reader.result)
+                        : reject(new Error("Could not read generated audio"));
+                    reader.readAsDataURL(audioBlob);
+                  });
+                  onNarrationAudioChange?.(audioData);
+                  onNarrationStatusChange?.("ready", null);
+                } catch (error) {
+                  onNarrationStatusChange?.(
+                    "error",
+                    error instanceof Error ? error.message : "Could not generate voiceover",
+                  );
+                }
+              })();
+            }
+          },
+          onError: (message, type, failedEdit) => {
+            onError?.(message, type, failedEdit);
+            if (options?.voiceover) {
+              onNarrationStatusChange?.("error", "Animation generation failed, so the voiceover was not generated.");
+            }
+          },
           onErrorMessage,
           onPendingMessage,
           onClearPendingMessage,
@@ -239,8 +297,8 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
               model={model}
               onModelChange={setModel}
               isLoading={isLoading}
-              onSubmit={(attachedImages) =>
-                handleGeneration({ attachedImages })
+              onSubmit={(attachedImages, voiceover) =>
+                handleGeneration({ attachedImages, voiceover })
               }
               Component={Component}
               fps={fps}

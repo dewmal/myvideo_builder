@@ -39,6 +39,8 @@ interface AnimationPlayerProps {
   onFrameChange?: (frame: number) => void;
   narrationAudio?: string | null;
   onNarrationAudioChange?: (audio: string | null) => void;
+  narrationStatus?: "idle" | "waiting" | "generating" | "ready" | "error";
+  narrationError?: string | null;
 }
 
 export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
@@ -56,6 +58,8 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
   onFrameChange,
   narrationAudio,
   onNarrationAudioChange,
+  narrationStatus = "idle",
+  narrationError = null,
 }) => {
   const playerRef = useRef<PlayerRef>(null);
   const updateNarrationAudio = onNarrationAudioChange || (() => {});
@@ -174,6 +178,8 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
             fps={fps}
             narrationAudio={audioSource}
             onNarrationAudioChange={updateNarrationAudio}
+            narrationStatus={narrationStatus}
+            narrationError={narrationError}
           />
           <SettingsModal
             durationInFrames={durationInFrames}

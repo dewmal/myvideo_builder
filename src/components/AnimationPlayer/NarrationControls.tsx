@@ -21,7 +21,9 @@ const LANGUAGES = [
 export const NarrationControls: React.FC<{
   narrationAudio: string | null;
   onNarrationAudioChange: (audio: string | null) => void;
-}> = ({ narrationAudio, onNarrationAudioChange }) => {
+  narrationStatus?: "idle" | "waiting" | "generating" | "ready" | "error";
+  narrationError?: string | null;
+}> = ({ narrationAudio, onNarrationAudioChange, narrationStatus = "idle", narrationError }) => {
   const [text, setText] = useState("");
   const [language, setLanguage] = useState("Auto");
   const [instructions, setInstructions] = useState(
@@ -82,9 +84,12 @@ export const NarrationControls: React.FC<{
     <details className="relative">
       <summary className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-md border border-border px-3 text-sm text-foreground hover:bg-background-elevated">
         <Mic2 className="h-4 w-4" /> Narration
-        {narrationAudio ? <span className="text-primary">• Ready</span> : null}
+        {narrationStatus === "waiting" ? <span className="text-muted-foreground">• Waiting</span> : null}
+        {narrationStatus === "generating" ? <span className="text-primary">• Generating</span> : null}
+        {narrationStatus === "error" ? <span className="text-red-400">• Error</span> : null}
+        {narrationAudio || narrationStatus === "ready" ? <span className="text-primary">• Ready</span> : null}
       </summary>
-      <div className="absolute bottom-12 right-0 z-20 w-[min(24rem,calc(100vw-2rem))] space-y-3 rounded-lg border border-border bg-background p-4 shadow-xl">
+      <div className="fixed bottom-24 right-4 z-50 max-h-[70vh] w-[min(24rem,calc(100vw-2rem))] space-y-3 overflow-y-auto rounded-lg border border-border bg-background p-4 shadow-xl">
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">Narration text</label>
           <textarea
@@ -113,9 +118,14 @@ export const NarrationControls: React.FC<{
             className="mt-1 w-full rounded-md border border-border bg-background-elevated p-2 text-sm text-foreground outline-none focus:border-primary"
           />
         </label>
-        {error ? <p className="text-xs text-red-400">{error}</p> : null}
+        {error || narrationError ? <p className="text-xs text-red-400">{error || narrationError}</p> : null}
+        {narrationStatus === "waiting" || narrationStatus === "generating" ? (
+          <p className="text-xs text-primary">
+            {narrationStatus === "waiting" ? "Waiting for the video to finish…" : "Generating voiceover with Qwen3-TTS…"}
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-2">
-          <Button onClick={generate} disabled={!text.trim() || isGenerating} loading={isGenerating}>
+          <Button onClick={generate} disabled={!text.trim() || isGenerating || narrationStatus === "waiting" || narrationStatus === "generating"} loading={isGenerating || narrationStatus === "generating"}>
             <Mic2 className="mr-2 h-4 w-4" /> Generate audio
           </Button>
           {narrationAudio ? (
@@ -129,7 +139,7 @@ export const NarrationControls: React.FC<{
             </>
           ) : null}
         </div>
-        <p className="text-xs text-muted-foreground">Generated audio is embedded in the video preview and render.</p>
+        <p className="text-xs text-muted-foreground">Generated audio is embedded in the video preview and render. The preview starts muted; unmute the Player controls to hear it.</p>
       </div>
     </details>
   );

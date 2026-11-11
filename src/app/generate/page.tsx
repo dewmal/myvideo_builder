@@ -36,6 +36,10 @@ function GeneratePageContent() {
   const [fps, setFps] = useState(examples[0]?.fps || 30);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [narrationAudio, setNarrationAudio] = useState<string | null>(null);
+  const [narrationStatus, setNarrationStatus] = useState<
+    "idle" | "waiting" | "generating" | "ready" | "error"
+  >("idle");
+  const [narrationError, setNarrationError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(willAutoStart);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>(
     willAutoStart ? "reasoning" : "idle",
@@ -285,6 +289,11 @@ function GeneratePageContent() {
           durationInFrames={durationInFrames}
           onDurationChange={setDurationInFrames}
           currentFrame={currentFrame}
+          onNarrationAudioChange={setNarrationAudio}
+          onNarrationStatusChange={(status, error) => {
+            setNarrationStatus(status);
+            setNarrationError(error || null);
+          }}
         />
 
         {/* Main content area */}
@@ -314,6 +323,8 @@ function GeneratePageContent() {
                 onFrameChange={setCurrentFrame}
                 narrationAudio={narrationAudio}
                 onNarrationAudioChange={setNarrationAudio}
+                narrationStatus={narrationStatus}
+                narrationError={narrationError}
               />
             }
           />

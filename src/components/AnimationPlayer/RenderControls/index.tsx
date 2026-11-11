@@ -15,13 +15,16 @@ export const RenderControls: React.FC<{
   fps: number;
   narrationAudio: string | null;
   onNarrationAudioChange: (audio: string | null) => void;
-}> = ({ code, durationInFrames, fps, narrationAudio, onNarrationAudioChange }) => {
+  narrationStatus: "idle" | "waiting" | "generating" | "ready" | "error";
+  narrationError: string | null;
+}> = ({ code, durationInFrames, fps, narrationAudio, onNarrationAudioChange, narrationStatus, narrationError }) => {
   const { renderMedia, state, undo } = useRendering({
     code,
     durationInFrames,
     fps,
     narrationAudio: narrationAudio || undefined,
   });
+  const narrationPending = narrationStatus === "waiting" || narrationStatus === "generating";
   const previousPropsRef = useRef({ code, durationInFrames, fps, narrationAudio });
 
   // Reset rendering state when code, duration, or fps changes
@@ -47,7 +50,7 @@ export const RenderControls: React.FC<{
     return (
       <div className="flex items-start gap-3">
         <Button
-          disabled={state.status === "invoking" || !code}
+          disabled={state.status === "invoking" || !code || narrationPending}
           loading={state.status === "invoking"}
           onClick={renderMedia}
         >
@@ -59,9 +62,24 @@ export const RenderControls: React.FC<{
         {state.status === "error" && (
           <ErrorComp message={state.error.message} />
         )}
+        {narrationStatus === "waiting" && (
+          <p className="self-center text-sm text-muted-foreground">
+            Voiceover will start after video generation.
+          </p>
+        )}
+        {narrationStatus === "generating" && (
+          <p className="self-center text-sm text-primary">
+            Generating voiceover. Rendering unlocks when it is ready.
+          </p>
+        )}
+        {narrationStatus === "error" && narrationError && (
+          <p className="max-w-xs self-center text-sm text-red-400">Voiceover failed: {narrationError}</p>
+        )}
         <NarrationControls
           narrationAudio={narrationAudio}
           onNarrationAudioChange={onNarrationAudioChange}
+          narrationStatus={narrationStatus}
+          narrationError={narrationError}
         />
       </div>
     );
@@ -74,6 +92,8 @@ export const RenderControls: React.FC<{
         <NarrationControls
           narrationAudio={narrationAudio}
           onNarrationAudioChange={onNarrationAudioChange}
+          narrationStatus={narrationStatus}
+          narrationError={narrationError}
         />
       </div>
     );
@@ -86,6 +106,8 @@ export const RenderControls: React.FC<{
         <NarrationControls
           narrationAudio={narrationAudio}
           onNarrationAudioChange={onNarrationAudioChange}
+          narrationStatus={narrationStatus}
+          narrationError={narrationError}
         />
       </div>
     );
