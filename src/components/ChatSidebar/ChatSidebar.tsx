@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  NARRATION_BUNDLE_PREFIX,
+  narrationBundleSchema,
+  readNarrationPlan,
+} from "@/helpers/narration-clips";
 import { Button } from "@/components/ui/button";
 import { useGenerationApi } from "@/hooks/useGenerationApi";
 import { cn } from "@/lib/utils";
@@ -27,7 +32,11 @@ import {
   type ComponentType,
 } from "react";
 import { ChatHistory } from "./ChatHistory";
-import { ChatInput, type VoiceoverRequest } from "./ChatInput";
+import {
+  ChatInput,
+  VOICEOVER_INTENT,
+  type VoiceoverRequest,
+} from "./ChatInput";
 
 type NarrationStatus = "idle" | "waiting" | "generating" | "ready" | "error";
 
@@ -82,7 +91,10 @@ interface ChatSidebarProps {
   onDurationChange?: (duration: number) => void;
   currentFrame?: number;
   onNarrationAudioChange?: (audio: string | null) => void;
-  onNarrationStatusChange?: (status: NarrationStatus, error?: string | null) => void;
+  onNarrationStatusChange?: (
+    status: NarrationStatus,
+    error?: string | null,
+  ) => void;
 }
 
 export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
@@ -121,6 +133,7 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
   ) {
     const [model, setModel] = useState<ModelId>(MODELS[0].id);
     const promptRef = useRef<string>("");
+    const narrationRequestRef = useRef(0);
 
     const { isLoading, runGeneration } = useGenerationApi();
 
@@ -135,14 +148,20 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
       voiceover?: VoiceoverRequest;
     }) => {
       const currentPrompt = promptRef.current;
-      if (!currentPrompt.trim()) return;
+      if (!currentPrompt.trim() || isLoading) return;
+      const requestId = ++narrationRequestRef.current;
+      const voiceover =
+        options?.voiceover ??
+        (VOICEOVER_INTENT.test(currentPrompt)
+          ? { prompt: currentPrompt }
+          : undefined);
 
       const generationDurationInFrames = isFollowUp
         ? durationInFrames
         : estimateDurationInFrames(currentPrompt, fps);
       if (!isFollowUp) onDurationChange?.(generationDurationInFrames);
 
-      if (options?.voiceover) {
+      if (voiceover) {
         onNarrationAudioChange?.(null);
         onNarrationStatusChange?.("waiting", null);
       } else {
@@ -170,41 +189,74 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
           onCodeGenerated,
           onStreamingChange,
           onStreamPhaseChange,
-          onError,
           onMessageSent: (message, attachedImages) => {
             onMessageSent?.(message, attachedImages);
           },
           onGenerationComplete: (generatedCode, summary, metadata) => {
             onGenerationComplete?.(generatedCode, summary, metadata);
-            if (options?.voiceover) {
+            if (voiceover) {
               onNarrationStatusChange?.("generating", null);
               void (async () => {
                 try {
+                  // Generated scenes, rather than the pre-generation estimate,
+                  // determine the shared visual and speech timeline.
+                  const clips = readNarrationPlan(generatedCode);
+                  const sceneDuration = clips[clips.length - 1].endSeconds;
+                  onDurationChange?.(Math.round(sceneDuration * fps));
                   const response = await fetch("/api/tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ prompt: options.voiceover.prompt }),
+                    body: JSON.stringify({
+                      prompt: voiceover.prompt,
+                      videoCode: generatedCode,
+                      durationSeconds: sceneDuration,
+                    }),
                   });
                   if (!response.ok) {
                     const result = await response.json().catch(() => null);
-                    throw new Error(result?.error || `TTS request failed (${response.status})`);
+                    throw new Error(
+                      result?.error ||
+                        `TTS request failed (${response.status})`,
+                    );
+                  }
+                  if (
+                    response.headers
+                      .get("content-type")
+                      ?.includes("application/json")
+                  ) {
+                    const bundle = narrationBundleSchema.parse(
+                      await response.json(),
+                    );
+                    if (requestId !== narrationRequestRef.current) return;
+                    onNarrationAudioChange?.(
+                      NARRATION_BUNDLE_PREFIX + JSON.stringify(bundle),
+                    );
+                    onNarrationStatusChange?.("ready", null);
+                    return;
                   }
                   const audioBlob = await response.blob();
-                  const audioData = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onerror = () => reject(new Error("Could not read generated audio"));
-                    reader.onload = () =>
-                      typeof reader.result === "string"
-                        ? resolve(reader.result)
-                        : reject(new Error("Could not read generated audio"));
-                    reader.readAsDataURL(audioBlob);
-                  });
+                  const audioData = await new Promise<string>(
+                    (resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onerror = () =>
+                        reject(new Error("Could not read generated audio"));
+                      reader.onload = () =>
+                        typeof reader.result === "string"
+                          ? resolve(reader.result)
+                          : reject(new Error("Could not read generated audio"));
+                      reader.readAsDataURL(audioBlob);
+                    },
+                  );
+                  if (requestId !== narrationRequestRef.current) return;
                   onNarrationAudioChange?.(audioData);
                   onNarrationStatusChange?.("ready", null);
                 } catch (error) {
+                  if (requestId !== narrationRequestRef.current) return;
                   onNarrationStatusChange?.(
                     "error",
-                    error instanceof Error ? error.message : "Could not generate voiceover",
+                    error instanceof Error
+                      ? error.message
+                      : "Could not generate voiceover",
                   );
                 }
               })();
@@ -212,8 +264,11 @@ export const ChatSidebar = forwardRef<ChatSidebarRef, ChatSidebarProps>(
           },
           onError: (message, type, failedEdit) => {
             onError?.(message, type, failedEdit);
-            if (options?.voiceover) {
-              onNarrationStatusChange?.("error", "Animation generation failed, so the voiceover was not generated.");
+            if (voiceover) {
+              onNarrationStatusChange?.(
+                "error",
+                "Animation generation failed, so the voiceover was not generated.",
+              );
             }
           },
           onErrorMessage,

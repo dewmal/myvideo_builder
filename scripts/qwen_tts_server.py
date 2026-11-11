@@ -13,8 +13,8 @@ from qwen_tts import Qwen3TTSModel
 
 MODEL_ID = os.environ.get(
     "QWEN_TTS_MODEL",
-    # "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
-      "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+    "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    #   "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
 )
 HOST = os.environ.get("QWEN_TTS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("QWEN_TTS_PORT", "8091"))

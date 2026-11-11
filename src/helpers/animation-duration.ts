@@ -20,8 +20,13 @@ export function estimateDurationInFrames(prompt: string, fps: number): number {
     if (requestedDuration) {
       durationSeconds = Number(requestedDuration[1]) * 60;
     } else {
+      const seconds = Array.from(
+        prompt.matchAll(/\b(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/gi),
+      ).at(-1);
       const wordCount = prompt.trim().split(/\s+/).filter(Boolean).length;
-      if (wordCount > 80) {
+      if (seconds) {
+        durationSeconds = Number(seconds[1]);
+      } else if (wordCount > 80) {
         durationSeconds = (wordCount / WORDS_PER_MINUTE) * 60;
       }
     }

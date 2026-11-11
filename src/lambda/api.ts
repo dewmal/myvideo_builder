@@ -17,7 +17,7 @@ export const renderVideo = async ({
   const body: z.infer<typeof RenderRequest> = {
     inputProps,
   };
-  const response = await fetch("/api/lambda/render", {
+  const response = await fetch("/api/render", {
     method: "POST",
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
@@ -89,7 +89,7 @@ export const renderVideo = async ({
 const getProgress = async (
   body: z.infer<typeof ProgressRequest>,
 ): Promise<ProgressResponse> => {
-  const response = await fetch("/api/lambda/progress", {
+  const response = await fetch("/api/render/progress", {
     method: "POST",
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },

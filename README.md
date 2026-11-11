@@ -55,6 +55,17 @@ The response is cleaned (removing markdown wrappers and trailing commentary), th
 
 Skills enable contextual expertise without bloating every prompt. Located in `src/skills/`:
 
+Narrated videos automatically load the [clip-narration skill](src/skills/clip-narration/SKILL.md).
+It plans short visual scenes and their spoken copy together in a `NARRATION_CLIPS`
+manifest. The app synthesizes each scene separately with one shared voice description,
+then sequences its audio within the matching visual boundaries. Preview and export
+use the same assembled timeline. Invalid or incomplete scene timing produces an error
+instead of attaching unrelated speech. Manual narration remains available as one track.
+
+For example: “Create a 24-second explainer about solar energy with narration,
+using four short scenes.” Generated visuals are assembled as Remotion sequences;
+separate video files are not rendered for each scene.
+
 ### Guidance Skills
 
 | Skill              | Purpose                                                                                 |
@@ -145,9 +156,11 @@ The inference service uses CUDA with bfloat16 when an NVIDIA CUDA GPU is availab
 
 Local narration requests allow up to 15 minutes for inference and audio transfer. Set `QWEN_TTS_TIMEOUT_SECONDS` to a smaller positive number (maximum 900) to fail sooner. Restart Next.js after changing environment settings. Hosting providers may enforce shorter request limits regardless of this setting. If generation times out, check the Python terminal before retrying: the service may still be processing the original request.
 
-The render endpoint uses [`renderMediaOnLambdaAndStream()`](https://www.remotion.dev/docs/lambda/rendermediaonlambdaandstream) and streams progress to the browser. If the connection closes early, the browser uses the progress endpoint to continue following the same render.
+**Render & Download** renders locally using Remotion's Node.js renderer. AWS credentials and Lambda deployment are not required. Run the app with `npm run dev`, then use the export button. The first render may download Remotion's bundled browser.
 
-Keep the progress endpoint available for recovery. Deploy the render endpoint on a Node.js server with response streaming enabled.
+The `/api/render` endpoint starts a background Node.js worker and the browser polls `/api/render/progress`. MP4 files and render logs are stored in `out/renders/<render-id>/`; downloads are served by `/api/render/<render-id>`. Narration is included when attached to the animation. Delete old render directories when you no longer need them.
+
+Local rendering requires a persistent Node.js server with writable disk and permission to launch a browser; serverless hosting is not supported by this local render path. The original Lambda endpoints remain available for a separate AWS deployment.
 
 ## Docs
 

@@ -377,9 +377,12 @@ export async function POST(req: Request) {
     console.error("Skill detection error:", skillError);
   }
 
+  if (/\b(?:voice(?:[\s-]?overs?)?|narrat(?:e|ion|or)|spoken|speech|speaking|dialogue|dialog)\b/i.test(prompt)
+    && !detectedSkills.includes("clip-narration")) detectedSkills.push("clip-narration");
+
   // Filter out skills that were already used in the conversation to avoid redundant context
   const newSkills = detectedSkills.filter(
-    (skill) => !previouslyUsedSkills.includes(skill),
+    (skill) => skill === "clip-narration" || !previouslyUsedSkills.includes(skill),
   );
   if (
     previouslyUsedSkills.length > 0 &&
@@ -393,9 +396,7 @@ export async function POST(req: Request) {
 
   // Load skill-specific content only for NEW skills (previously used skills are already in context)
   const skillContent = getCombinedSkillContent(newSkills as SkillName[]);
-  const durationGuidance = !isFollowUp
-    ? `\n\n## TARGET VIDEO DURATION\nCreate a complete animation that fills approximately ${(durationInFrames / fps).toFixed(1)} seconds at ${fps} FPS. Pace every scene and transition across the full duration. Use useVideoConfig().durationInFrames for timing so the ending lands near the end of the composition.`
-    : "";
+  const durationGuidance = `\n\n## TARGET VIDEO DURATION\nThe target is ${durationInFrames / fps} seconds (${durationInFrames} frames at ${fps} FPS). Pace every scene across the full timeline. For narrated videos, make the final NARRATION_CLIPS endSeconds equal to ${durationInFrames / fps}, and use its boundaries for visual Sequences as well. Keep the manifest as strict JSON with quoted keys and no trailing commas.`;
   const enhancedSystemPrompt = skillContent
     ? `${SYSTEM_PROMPT}\n\n## SKILL-SPECIFIC GUIDANCE\n${skillContent}${durationGuidance}`
     : `${SYSTEM_PROMPT}${durationGuidance}`;

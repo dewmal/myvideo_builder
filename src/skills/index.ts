@@ -1,6 +1,7 @@
 import { examples } from "@/examples/code";
 
 // Import markdown files at build time
+import clipNarrationSkill from "./clip-narration/SKILL.md";
 import threeDSkill from "./3d.md";
 import chartsSkill from "./charts.md";
 import messagingSkill from "./messaging.md";
@@ -12,6 +13,7 @@ import typographySkill from "./typography.md";
 
 // Guidance skills (markdown files with patterns/rules)
 const GUIDANCE_SKILLS = [
+  "clip-narration",
   "charts",
   "typography",
   "social-media",
@@ -41,6 +43,7 @@ export type SkillName = (typeof SKILL_NAMES)[number];
 
 // Map guidance skill names to imported content
 const guidanceSkillContent: Record<(typeof GUIDANCE_SKILLS)[number], string> = {
+  "clip-narration": clipNarrationSkill,
   charts: chartsSkill,
   typography: typographySkill,
   "social-media": socialMediaSkill,
@@ -98,6 +101,7 @@ export const SKILL_DETECTION_PROMPT = `Classify this motion graphics prompt into
 A prompt can match multiple categories. Only include categories that are clearly relevant.
 
 Guidance categories (patterns and rules):
+- clip-narration: voiceover, narration, spoken speech aligned to short scenes assembled into a complete video
 - charts: data visualizations, graphs, histograms, bar charts, pie charts, progress bars, statistics, metrics
 - typography: kinetic text, typewriter effects, text animations, word carousels, animated titles, text-heavy content
 - social-media: Instagram stories, TikTok content, YouTube shorts, social media posts, reels, vertical video

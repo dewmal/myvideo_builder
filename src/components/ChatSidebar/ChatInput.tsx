@@ -33,7 +33,7 @@ export interface VoiceoverRequest {
   prompt: string;
 }
 
-const VOICEOVER_INTENT =
+export const VOICEOVER_INTENT =
   /\b(?:voice(?:[\s-]?overs?)?|narrat(?:e|ion|or)|spoken|speech|speaking|dialogue|dialog)\b/i;
 
 export function ChatInput({

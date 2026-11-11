@@ -1,7 +1,7 @@
 "use client";
 
 import { Player, type ErrorFallback, type PlayerRef } from "@remotion/player";
-import { Audio } from "remotion";
+import { SyncedNarration } from "@/remotion/SyncedNarration";
 import React, { useEffect, useMemo, useRef } from "react";
 import { ErrorDisplay, type ErrorType } from "@/components/ErrorDisplay";
 import { RenderControls } from "./RenderControls";
@@ -69,7 +69,7 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
     const VisualWithNarration: React.FC = () => (
       <>
         <Component />
-        <Audio src={audioSource} />
+        <SyncedNarration key={audioSource} src={audioSource} />
       </>
     );
     return VisualWithNarration;

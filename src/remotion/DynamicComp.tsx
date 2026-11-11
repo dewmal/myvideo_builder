@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
   AbsoluteFill,
-  Audio,
   continueRender,
   delayRender,
   getInputProps,
 } from "remotion";
 import { compileCode } from "./compiler";
+import { SyncedNarration } from "./SyncedNarration";
 
 interface DynamicCompProps {
   code: string;
@@ -82,7 +82,7 @@ export const DynamicComp: React.FC = () => {
   return (
     <>
       <Component />
-      {narrationAudio ? <Audio src={narrationAudio} /> : null}
+      {narrationAudio ? <SyncedNarration key={narrationAudio} src={narrationAudio} /> : null}
     </>
   );
 };
