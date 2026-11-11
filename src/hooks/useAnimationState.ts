@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   compileCode as compile,
   type CompilationResult,
-} from "../remotion/compiler";
+} from "@/remotion/compiler";
 
 export interface AnimationState {
   code: string;

@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { useRendering } from "../../../helpers/use-rendering";
+import { useRendering } from "@/helpers/use-rendering";
 import { DownloadButton } from "./DownloadButton";
 import { ErrorComp } from "./Error";
 import { ProgressBar } from "./ProgressBar";
-import { NarrationControls } from "../NarrationControls";
+import { NarrationControls } from "@/components/AnimationPlayer/NarrationControls";
 
 export const RenderControls: React.FC<{
   code: string;

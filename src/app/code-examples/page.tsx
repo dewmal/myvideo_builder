@@ -11,12 +11,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { AnimationPlayer } from "../../components/AnimationPlayer";
-import { CodeEditor } from "../../components/CodeEditor";
-import { Header } from "../../components/Header";
-import { TabPanel } from "../../components/TabPanel";
-import { examples, getExampleById } from "../../examples/code";
-import { useAnimationState } from "../../hooks/useAnimationState";
+import { AnimationPlayer } from "@/components/AnimationPlayer";
+import { CodeEditor } from "@/components/CodeEditor";
+import { Header } from "@/components/Header";
+import { TabPanel } from "@/components/TabPanel";
+import { examples, getExampleById } from "@/examples/code";
+import { useAnimationState } from "@/hooks/useAnimationState";
 
 function DemoPageContent() {
   const searchParams = useSearchParams();

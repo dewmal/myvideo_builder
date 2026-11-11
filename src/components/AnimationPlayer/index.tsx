@@ -3,7 +3,7 @@
 import { Player, type ErrorFallback, type PlayerRef } from "@remotion/player";
 import { Audio } from "remotion";
 import React, { useEffect, useMemo, useRef } from "react";
-import { ErrorDisplay, type ErrorType } from "../ErrorDisplay";
+import { ErrorDisplay, type ErrorType } from "@/components/ErrorDisplay";
 import { RenderControls } from "./RenderControls";
 import { SettingsModal } from "./SettingsModal";
 

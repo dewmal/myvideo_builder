@@ -4,21 +4,21 @@ import { Loader2 } from "lucide-react";
 import type { NextPage } from "next";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { AnimationPlayer } from "../../components/AnimationPlayer";
-import { ChatSidebar, type ChatSidebarRef } from "../../components/ChatSidebar";
-import { CodeEditor } from "../../components/CodeEditor";
-import { PageLayout } from "../../components/PageLayout";
-import { TabPanel } from "../../components/TabPanel";
-import { examples } from "../../examples/code";
-import { useAnimationState } from "../../hooks/useAnimationState";
-import { useAutoCorrection } from "../../hooks/useAutoCorrection";
-import { useConversationState } from "../../hooks/useConversationState";
+import { AnimationPlayer } from "@/components/AnimationPlayer";
+import { ChatSidebar, type ChatSidebarRef } from "@/components/ChatSidebar";
+import { CodeEditor } from "@/components/CodeEditor";
+import { PageLayout } from "@/components/PageLayout";
+import { TabPanel } from "@/components/TabPanel";
+import { examples } from "@/examples/code";
+import { useAnimationState } from "@/hooks/useAnimationState";
+import { useAutoCorrection } from "@/hooks/useAutoCorrection";
+import { useConversationState } from "@/hooks/useConversationState";
 import type {
   AssistantMetadata,
   EditOperation,
   ErrorCorrectionContext,
-} from "../../types/conversation";
-import type { GenerationErrorType, StreamPhase } from "../../types/generation";
+} from "@/types/conversation";
+import type { GenerationErrorType, StreamPhase } from "@/types/generation";
 
 const MAX_CORRECTION_ATTEMPTS = 3;
 

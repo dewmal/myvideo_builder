@@ -9,10 +9,10 @@ import {
   REGION,
   SITE_NAME,
   TIMEOUT,
-} from "../../../../../config.mjs";
-import { COMP_NAME } from "../../../../../types/constants";
-import { RenderRequest, RenderStreamEvent } from "@types/schema";
-import { executeApi } from "../../../../helpers/api-response";
+} from "@root/config.mjs";
+import { COMP_NAME } from "@root/types/constants";
+import { RenderRequest, RenderStreamEvent } from "@root/types/schema";
+import { executeApi } from "@/helpers/api-response";
 
 export const POST = executeApi<Response, typeof RenderRequest>(
   RenderRequest,

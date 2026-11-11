@@ -1,5 +1,5 @@
 import { Metadata, Viewport } from "next";
-import "../../styles/global.css";
+import "@root/styles/global.css";
 
 export const metadata: Metadata = {
   title: "Prompt to Motion Graphics - Remotion",

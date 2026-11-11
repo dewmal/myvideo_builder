@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { CompositionProps } from "../../types/constants";
+import { CompositionProps } from "@root/types/constants";
 import {
   ProgressRequest,
   ProgressResponse,
   RenderRequest,
   RenderStreamEvent,
-} from "../../types/schema";
+} from "@root/types/schema";
 
 export const renderVideo = async ({
   inputProps,

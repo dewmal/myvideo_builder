@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { z } from "zod";
-import { CompositionProps } from "../../types/constants";
-import { renderVideo } from "../lambda/api";
+import { CompositionProps } from "@root/types/constants";
+import { renderVideo } from "@/lambda/api";
 
 export type State =
   | {

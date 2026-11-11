@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { State } from "../../../helpers/use-rendering";
+import { State } from "@/helpers/use-rendering";
 
 const Megabytes: React.FC<{
   sizeInBytes: number;

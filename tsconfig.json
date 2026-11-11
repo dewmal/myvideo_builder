@@ -22,6 +22,7 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@root/*": ["./*"],
       "react": ["../../node_modules/@types/react"]
     }
   },
