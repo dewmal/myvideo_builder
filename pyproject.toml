@@ -1,0 +1,31 @@
+[project]
+name = "myvideo-builder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "dewma", email = "dewmal@syigen.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "qwen-tts==0.1.1",
+    "soundfile>=0.14.0",
+    "torch==2.11.0",
+    "torchaudio==2.11.0",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[project.scripts]
+myvideo-builder = "myvideo_builder:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"

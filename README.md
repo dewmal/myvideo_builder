@@ -125,19 +125,16 @@ npx remotion upgrade
 
 The editor uses Qwen's Python inference runtime through a small local HTTP service. It loads the VoiceDesign model once and keeps it resident for later narration requests. The first load downloads the complete model files, including configuration and tokenizer files, from Hugging Face. See the [official Qwen3-TTS usage guide](https://github.com/QwenLM/Qwen3-TTS#voice-design) and [VoiceDesign model files](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main).
 
-Create a Python 3.12 environment and install the official runtime:
+Install the Python 3.12 environment and official runtime with uv:
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -U qwen-tts soundfile
+uv sync
 ```
 
 Start the resident inference service in one terminal:
 
 ```bash
-source .venv/bin/activate
-python scripts/qwen_tts_server.py
+uv run python scripts/qwen_tts_server.py
 ```
 
 The service listens on `http://127.0.0.1:8091`. Start the Next.js app in another terminal with `npm run dev`. Include a voiceover or narration request and its style/details in the same video prompt. The app drafts spoken copy from that request, then synthesizes it with Qwen after the animation code is ready. It preserves explicit quoted dialogue. You can also use **Narration** beside the render controls for manual audio generation or download. The preview starts muted, so unmute the Player controls to hear it. Voiceover audio is attached to **Render & Download**.
