@@ -6,4 +6,5 @@ export const CompositionProps = z.object({
   code: z.string(),
   durationInFrames: z.number(),
   fps: z.number(),
+  narrationAudio: z.string().optional(),
 });

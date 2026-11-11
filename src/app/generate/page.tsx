@@ -35,6 +35,7 @@ function GeneratePageContent() {
   );
   const [fps, setFps] = useState(examples[0]?.fps || 30);
   const [currentFrame, setCurrentFrame] = useState(0);
+  const [narrationAudio, setNarrationAudio] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(willAutoStart);
   const [streamPhase, setStreamPhase] = useState<StreamPhase>(
     willAutoStart ? "reasoning" : "idle",
@@ -311,6 +312,8 @@ function GeneratePageContent() {
                 code={code}
                 onRuntimeError={handleRuntimeError}
                 onFrameChange={setCurrentFrame}
+                narrationAudio={narrationAudio}
+                onNarrationAudioChange={setNarrationAudio}
               />
             }
           />

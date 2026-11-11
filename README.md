@@ -121,6 +121,29 @@ npx remotion render
 npx remotion upgrade
 ```
 
+## Local Qwen3-TTS narration
+
+The editor uses Qwen's Python inference runtime through a small local HTTP service. It loads the VoiceDesign model once and keeps it resident for later narration requests. The first load downloads the complete model files, including configuration and tokenizer files, from Hugging Face. See the [official Qwen3-TTS usage guide](https://github.com/QwenLM/Qwen3-TTS#voice-design) and [VoiceDesign model files](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign/tree/main).
+
+Create a Python 3.12 environment and install the official runtime:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -U qwen-tts soundfile
+```
+
+Start the resident inference service in one terminal:
+
+```bash
+source .venv/bin/activate
+python scripts/qwen_tts_server.py
+```
+
+The service listens on `http://127.0.0.1:8091`. Start the Next.js app in another terminal with `npm run dev`, open a video, and select **Narration** beside the render controls. Enter narration text, language, and a voice description, then select **Generate audio**. Download the WAV or keep it attached to the preview and **Render & Download**.
+
+The inference service uses CUDA with bfloat16 when an NVIDIA CUDA GPU is available. Without CUDA it falls back to CPU in float32, which is portable but much slower. The model location can be overridden with `QWEN_TTS_MODEL` if you have downloaded the complete model directory elsewhere. `QWEN_TTS_HOST` and `QWEN_TTS_PORT` configure the local service; set `QWEN_TTS_BASE_URL` in `.env` if you change the port or run the service on another reachable machine.
+
 ## Render progress
 
 The render endpoint uses [`renderMediaOnLambdaAndStream()`](https://www.remotion.dev/docs/lambda/rendermediaonlambdaandstream) and streams progress to the browser. If the connection closes early, the browser uses the progress endpoint to continue following the same render.

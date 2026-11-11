@@ -1,7 +1,8 @@
 "use client";
 
 import { Player, type ErrorFallback, type PlayerRef } from "@remotion/player";
-import React, { useEffect, useRef } from "react";
+import { Audio } from "remotion";
+import React, { useEffect, useMemo, useRef } from "react";
 import { ErrorDisplay, type ErrorType } from "../ErrorDisplay";
 import { RenderControls } from "./RenderControls";
 import { SettingsModal } from "./SettingsModal";
@@ -36,6 +37,8 @@ interface AnimationPlayerProps {
   code: string;
   onRuntimeError?: (error: string) => void;
   onFrameChange?: (frame: number) => void;
+  narrationAudio?: string | null;
+  onNarrationAudioChange?: (audio: string | null) => void;
 }
 
 export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
@@ -51,8 +54,22 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
   code,
   onRuntimeError,
   onFrameChange,
+  narrationAudio,
+  onNarrationAudioChange,
 }) => {
   const playerRef = useRef<PlayerRef>(null);
+  const updateNarrationAudio = onNarrationAudioChange || (() => {});
+  const audioSource = narrationAudio || null;
+  const PlayerComponent = useMemo(() => {
+    if (!Component || !audioSource) return Component;
+    const VisualWithNarration: React.FC = () => (
+      <>
+        <Component />
+        <Audio src={audioSource} />
+      </>
+    );
+    return VisualWithNarration;
+  }, [Component, audioSource]);
 
   // Listen for runtime errors from the Player's error boundary
   // Component is included in deps because the Player remounts when Component changes (via key={Component.toString()})
@@ -68,7 +85,7 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
     return () => {
       player.removeEventListener("error", handleError);
     };
-  }, [onRuntimeError, Component]);
+  }, [onRuntimeError, PlayerComponent]);
 
   // Listen for frame changes and report to parent
   // Component is included in deps because the Player remounts when Component changes (via key={Component.toString()})
@@ -84,7 +101,7 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
     return () => {
       player.removeEventListener("frameupdate", handleFrameUpdate);
     };
-  }, [onFrameChange, Component]);
+  }, [onFrameChange, PlayerComponent]);
 
   const renderContent = () => {
     if (isStreaming) {
@@ -130,8 +147,8 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
         <div className="w-full aspect-video max-h-[calc(100%-80px)] rounded-lg overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)]">
           <Player
             ref={playerRef}
-            key={Component.toString()}
-            component={Component}
+            key={PlayerComponent?.toString()}
+            component={PlayerComponent!}
             durationInFrames={durationInFrames}
             fps={fps}
             compositionHeight={1080}
@@ -155,6 +172,8 @@ export const AnimationPlayer: React.FC<AnimationPlayerProps> = ({
             code={code}
             durationInFrames={durationInFrames}
             fps={fps}
+            narrationAudio={audioSource}
+            onNarrationAudioChange={updateNarrationAudio}
           />
           <SettingsModal
             durationInFrames={durationInFrames}

@@ -15,6 +15,7 @@ import { wipe } from "@remotion/transitions/wipe";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AbsoluteFill,
+  Audio,
   Img,
   Sequence,
   interpolate,
@@ -97,6 +98,7 @@ export function compileCode(code: string): CompilationResult {
 
     const Remotion = {
       AbsoluteFill,
+      Audio,
       interpolate,
       useCurrentFrame,
       useVideoConfig,
@@ -115,6 +117,7 @@ export function compileCode(code: string): CompilationResult {
       "ThreeCanvas",
       "THREE",
       "AbsoluteFill",
+      "Audio",
       "interpolate",
       "useCurrentFrame",
       "useVideoConfig",
@@ -161,6 +164,7 @@ export function compileCode(code: string): CompilationResult {
       ThreeCanvas,
       THREE,
       AbsoluteFill,
+      Audio,
       interpolate,
       useCurrentFrame,
       useVideoConfig,

@@ -11,7 +11,7 @@ import {
   TIMEOUT,
 } from "../../../../../config.mjs";
 import { COMP_NAME } from "../../../../../types/constants";
-import { RenderRequest, RenderStreamEvent } from "../../../../../types/schema";
+import { RenderRequest, RenderStreamEvent } from "@types/schema";
 import { executeApi } from "../../../../helpers/api-response";
 
 export const POST = executeApi<Response, typeof RenderRequest>(

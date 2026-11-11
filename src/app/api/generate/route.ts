@@ -76,7 +76,7 @@ This allows users to easily customize the animation.
 ## AVAILABLE IMPORTS
 
 \`\`\`tsx
-import { useCurrentFrame, useVideoConfig, AbsoluteFill, interpolate, spring, Sequence } from "remotion";
+import { useCurrentFrame, useVideoConfig, AbsoluteFill, Audio, interpolate, spring, Sequence } from "remotion";
 import { TransitionSeries, linearTiming, springTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
@@ -88,7 +88,7 @@ import { useState, useEffect } from "react";
 ## RESERVED NAMES (CRITICAL)
 
 NEVER use these as variable names - they shadow imports:
-- spring, interpolate, useCurrentFrame, useVideoConfig, AbsoluteFill, Sequence
+- spring, interpolate, useCurrentFrame, useVideoConfig, AbsoluteFill, Audio, Sequence
 
 ## STYLING RULES
 

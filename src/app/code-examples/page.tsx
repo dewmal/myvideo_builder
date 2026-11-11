@@ -36,6 +36,7 @@ function DemoPageContent() {
     selectedExample.durationInFrames,
   );
   const [fps, setFps] = useState(selectedExample.fps);
+  const [narrationAudio, setNarrationAudio] = useState<string | null>(null);
   const selectedButtonRef = useRef<HTMLButtonElement>(null);
 
   const { code, Component, error, isCompiling, setCode, compileCode } =
@@ -191,6 +192,8 @@ function DemoPageContent() {
                     isStreaming={false}
                     error={error}
                     code={code}
+                    narrationAudio={narrationAudio}
+                    onNarrationAudioChange={setNarrationAudio}
                   />
                 </div>
               }

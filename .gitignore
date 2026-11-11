@@ -40,3 +40,6 @@ build
 .next
 .claude
 .agents
+models
+.venv/
+__pycache__/

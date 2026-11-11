@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   AbsoluteFill,
+  Audio,
   continueRender,
   delayRender,
   getInputProps,
@@ -9,11 +10,12 @@ import { compileCode } from "./compiler";
 
 interface DynamicCompProps {
   code: string;
+  narrationAudio?: string;
   [key: string]: unknown;
 }
 
 export const DynamicComp: React.FC = () => {
-  const { code } = getInputProps() as DynamicCompProps;
+  const { code, narrationAudio } = getInputProps() as DynamicCompProps;
 
   const [handle] = useState(() => delayRender("Compiling code..."));
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
@@ -77,5 +79,10 @@ export const DynamicComp: React.FC = () => {
     return null;
   }
 
-  return <Component />;
+  return (
+    <>
+      <Component />
+      {narrationAudio ? <Audio src={narrationAudio} /> : null}
+    </>
+  );
 };
