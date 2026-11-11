@@ -2,9 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 960;
+
+// Use Node's HTTP client so long local inference is not cut off by fetch's
+// separate response-header deadline. Bound the entire transfer, including audio.
+function synthesize(url: string, body: string, timeoutMs: number): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const transport = target.protocol === "https:" ? httpsRequest : httpRequest;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const req = transport(target, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
+      signal: controller.signal,
+    }, (res) => {
+      const chunks: Uint8Array[] = [];
+      let size = 0;
+      res.on("data", (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > 40 * 1024 * 1024) {
+          res.destroy(new Error("Qwen3-TTS audio exceeded 40 MB."));
+          return;
+        }
+        chunks.push(new Uint8Array(chunk));
+      });
+      res.on("error", (error) => { clearTimeout(timer); reject(error); });
+      res.on("end", () => {
+        clearTimeout(timer);
+        const audio = new Uint8Array(size);
+        let offset = 0;
+        for (const chunk of chunks) {
+          audio.set(chunk, offset);
+          offset += chunk.length;
+        }
+        resolve(new Response(audio.buffer, {
+          status: res.statusCode || 502,
+          headers: { "Content-Type": res.headers["content-type"] || "audio/wav" },
+        }));
+      });
+    });
+    req.on("error", (error) => { clearTimeout(timer); reject(error); });
+    req.end(body);
+  });
+}
 
 const allowedLanguages = [
   "Auto",
@@ -84,19 +129,22 @@ export async function POST(request: NextRequest) {
 
   const serviceUrl = (process.env.QWEN_TTS_BASE_URL || "http://127.0.0.1:8091").replace(/\/$/, "");
   let response: Response;
+  const configuredTimeout = Number(process.env.QWEN_TTS_TIMEOUT_SECONDS || 900);
+  const timeoutSeconds = Number.isFinite(configuredTimeout) && configuredTimeout > 0
+    ? Math.min(configuredTimeout, 900)
+    : 900;
   try {
-    response = await fetch(`${serviceUrl}/v1/audio/speech`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input: text, language, instructions }),
-      signal: AbortSignal.timeout(280_000),
-      cache: "no-store",
-    });
+    response = await synthesize(
+      `${serviceUrl}/v1/audio/speech`,
+      JSON.stringify({ input: text, language, instructions }),
+      timeoutSeconds * 1000,
+    );
   } catch (error) {
-    const message = error instanceof Error && error.name === "TimeoutError"
-      ? "Qwen3-TTS took too long to respond."
+    const timedOut = error instanceof Error && error.name === "AbortError";
+    const message = timedOut
+      ? `Qwen3-TTS did not finish within ${timeoutSeconds} seconds. Check the Python service terminal for progress or errors, and try a shorter narration. The service may still be generating the previous request.`
       : `Could not reach the local Qwen3-TTS Python service at ${serviceUrl}. Start it and try again.`;
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: timedOut ? 504 : 502 });
   }
 
   if (!response.ok) {

@@ -143,6 +143,8 @@ The inference service uses CUDA with bfloat16 when an NVIDIA CUDA GPU is availab
 
 ## Render progress
 
+Local narration requests allow up to 15 minutes for inference and audio transfer. Set `QWEN_TTS_TIMEOUT_SECONDS` to a smaller positive number (maximum 900) to fail sooner. Restart Next.js after changing environment settings. Hosting providers may enforce shorter request limits regardless of this setting. If generation times out, check the Python terminal before retrying: the service may still be processing the original request.
+
 The render endpoint uses [`renderMediaOnLambdaAndStream()`](https://www.remotion.dev/docs/lambda/rendermediaonlambdaandstream) and streams progress to the browser. If the connection closes early, the browser uses the progress endpoint to continue following the same render.
 
 Keep the progress endpoint available for recovery. Deploy the render endpoint on a Node.js server with response streaming enabled.
